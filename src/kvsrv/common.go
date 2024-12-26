@@ -6,6 +6,7 @@ type PutAppendArgs struct {
 	Value string
 	Clientid 	  int64
 	Get_reply	  bool
+	Processedkey	int64
 	// You'll have to add definitions here.
 	// Field names must start with capital letters,
 	// otherwise RPC will break.
@@ -19,6 +20,7 @@ type GetArgs struct {
 	Key string
 	Clientid 	  int64
 	Get_reply	  bool
+	Processedkey	int64
 	// You'll have to add definitions here.
 }
 

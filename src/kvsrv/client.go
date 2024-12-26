@@ -73,7 +73,7 @@ func (ck *Clerk) PutAppend(key string, value string, op string) string {
 	args.Clientid = ck.id
 
 	args.Get_reply = true
-
+	args.Processedkey = time.Now().UnixNano()
 	if op == "Put" {
 		for {
 			ok := ck.server.Call("KVServer.Put", &args, &reply)

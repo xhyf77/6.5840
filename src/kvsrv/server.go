@@ -19,6 +19,7 @@ type KVServer struct {
 	mu sync.Mutex
 	kvMap map[string]string
 	processedOps   map[int64]string
+	processedkey   map[int64]int64
 	// Your definitions here.
 }
 
@@ -34,6 +35,7 @@ func (kv *KVServer) Get(args *GetArgs, reply *GetReply) {
 		_ , exist := kv.processedOps[args.Clientid]
 		if exist {
 			delete( kv.processedOps , args.Clientid )
+			delete( kv.processedkey , args.Clientid )
 		}
 	}
 }
@@ -50,6 +52,7 @@ func (kv *KVServer) Put(args *PutAppendArgs, reply *PutAppendReply) {
 		_ , exist := kv.processedOps[args.Clientid]
 		if exist {
 			delete( kv.processedOps , args.Clientid )
+			delete( kv.processedkey , args.Clientid )
 		}
 	}
 }
@@ -59,17 +62,15 @@ func (kv *KVServer) Append(args *PutAppendArgs, reply *PutAppendReply) {
 	kv.mu.Lock()
 	defer kv.mu.Unlock()
 
-	if args.Get_reply {
-		_ , exist := kv.processedOps[args.Clientid]
-		if exist {
-			delete( kv.processedOps , args.Clientid )
-		}
-	} else {
-		record, exists := kv.processedOps[args.Clientid]
-		if exists {
-			reply.Value = record
+	record, exists := kv.processedkey[args.Clientid]
+	if exists {
+		if record == args.Processedkey {
+			reply.Value = kv.processedOps[args.Clientid]
 			return 
-		}	
+		} else {
+			delete( kv.processedOps , args.Clientid )
+			delete( kv.processedkey , args.Clientid )
+		}
 	}
 	oldValue, exists := kv.kvMap[args.Key]
     if !exists {
@@ -80,12 +81,14 @@ func (kv *KVServer) Append(args *PutAppendArgs, reply *PutAppendReply) {
     reply.Value = oldValue
 
 	kv.processedOps[args.Clientid] = oldValue
+	kv.processedkey[args.Clientid] = args.Processedkey
 }
 
 func StartKVServer() *KVServer {
 	kv := new(KVServer)
 	kv.kvMap = make(map[string]string)
 	kv.processedOps = make(map[int64]string)
+	kv.processedkey = make(map[int64]int64)
 	// You may need initialization code here.
 
 	return kv
